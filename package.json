@@ -1,0 +1,31 @@
+{
+  "name": "TripAPI",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:dev": "nodemon ./bin/www",
+    "test": "set NODE_ENV=mocha&& mocha spec --require spec/helpers/chai.js --reporter spec || exit 0",
+    "coverage": "istanbul cover -x server/components/*/routes/*.js  node_modules/mocha/bin/_mocha spec --recursive -- -u exports -R spec"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "debug": "^3.1.0",
+    "express": "^4.16.3",
+    "inherits": "^2.0.3",
+    "mongoose": "^5.0.14",
+    "morgan": "^1.9.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "istanbul": "^0.4.5",
+    "mocha": "^5.1.0",
+    "node-mocks-http": "^1.6.3",
+    "nodemon": "^1.17.3",
+    "sinon": "^4.5.0",
+    "chai-http": "^3.0.0"
+  }
+}
