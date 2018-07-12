@@ -14,15 +14,27 @@ const TripController = function(){
                 duration: bodyTrip.duration,
                 cities: []
             });
-            trip.save(function(err, trip) {
-                if(err) return res.status(500).send(err.message);
+            trip.save()
+            .then( trip => {
                 res.status(201).jsonp(trip);
+            })
+            .catch(err =>{
+                return res.status(500).send(err.message);
             });
         }
         catch(err) {
             res.status(500).send('Error al crear viaje');
-            //throw err;
         };
+    }
+
+    controller.getTrip = function(req, res){
+        Trip.findById(req.params.id)
+        .then(trip => {
+            res.status(200).jsonp(trip);
+        })
+        .catch(err => {
+            return res.status(500).send('Error al intentar obetener viaje');
+        })
     }
 
     return controller;

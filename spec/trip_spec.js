@@ -2,6 +2,7 @@ const tripController = require('../server/components/trip').TripController();
 const chai = require('chai');
 const chaiHttp = require("chai-http");
 const sinon = require('sinon');
+const sinonMongoose = require('sinon-mongoose');
 const http_mocks = require('node-mocks-http');
 const should = chai.should();
 const expect = chai.expect;
@@ -24,7 +25,7 @@ describe('Trip UT', function(){
             duration: 'bodyTrip.duration',
             cities: []
         }
-        let tripSave = sinon.stub(Trip.prototype, 'save').yields(null, 'ok');
+        let tripSave = sinon.stub(Trip.prototype, 'save').resolves({id: 'ok'});
         let response = buildResponse();
         let request = http_mocks.createRequest({
             method: 'POST',
@@ -49,7 +50,7 @@ describe('Trip UT', function(){
             duration: 'bodyTrip.duration',
             cities: []
         }
-        let tripSave = sinon.stub(Trip.prototype, 'save').yields('error', null);
+        let tripSave = sinon.stub(Trip.prototype, 'save').rejects('error');
         let response = buildResponse();
         let request = http_mocks.createRequest({
             method: 'POST',
@@ -74,11 +75,11 @@ describe('Trip UT', function(){
             duration: 'bodyTrip.duration',
             cities: []
         }
-        let tripSave = sinon.stub(Trip.prototype, 'save').throws('error');
+        let tripSave = sinon.stub(Trip.prototype, 'save').rejects('error');
         let response = buildResponse();
         let request = http_mocks.createRequest({
             method: 'POST',
-            url: 'api/trip/create',
+            url: '/trip/create',
             body: {trip: JSON.stringify(tripObj)}
         }); 
 
@@ -91,9 +92,63 @@ describe('Trip UT', function(){
 
         tripController.createTrip(request, response);
     });
+
+    it('Obtener viaje Error', function(done){
+        //let tripGet = sinon.stub(Trip.prototype, 'findById').yields(null, {id: 'asdf'});
+        let response = buildResponse();
+        let request = http_mocks.createRequest({
+            method: 'GET',
+            params: {id: '5ae8e6d5af9fdf1ad05a3eaf'},
+            url: '/trip/get'
+        });
+        var TripMock = sinon.mock(Trip);
+        TripMock
+        .expects('findById')
+        .withArgs('5ae8e6d5af9fdf1ad05a3eaf')
+        .chain('exec')
+        .rejects('error');
+        
+        
+        response.on('end', function(){
+            TripMock.restore();
+            response.statusCode.should.be.eql(500);
+            done();
+        });
+
+        tripController.getTrip(request, response);
+    });
+
+    it('Obtener viaje', function(done){
+        //let tripGet = sinon.stub(Trip.prototype, 'findById').yields(null, {id: 'asdf'});
+        let response = buildResponse();
+        let request = http_mocks.createRequest({
+            method: 'GET',
+            params: {id: '5ae8e6d5af9fdf1ad05a3eaf'},
+            url: '/trip/get'
+        });
+        var TripMock = sinon.mock(Trip);
+        TripMock
+        .expects('findById')
+        .withArgs('5ae8e6d5af9fdf1ad05a3eaf')
+        .chain('exec')
+        .resolves({id: '5ae8e6d5af9fdf1ad05a3eaf'});
+        
+        
+        response.on('end', function(){
+            TripMock.restore();
+            response.statusCode.should.be.eql(200);
+            //assert.equal(response, {id: '5ae8e6d5af9fdf1ad05a3eaf'});
+            done();
+        });
+
+        tripController.getTrip(request, response);
+    });
+
+
 })
 
 describe('Viajes End-To-End test', function(){
+    let idViaje;
     let trip = {
         name: 'Unit Test End to end',
         description: 'bodyTrip.description',
@@ -104,9 +159,20 @@ describe('Viajes End-To-End test', function(){
         chai.request(base_url)
         .post("/create")
         .send({trip: JSON.stringify(trip)})
-        .then(res =>{                   
+        .then(res =>{
+            idViaje = res.body._id;                  
             res.should.have.status(201);
             done();
         })
-    })
+    });
+
+    it('Obtener viaje creado', function(done){
+        chai.request(base_url)
+        .get("/get")
+        .send({id: idViaje})
+        .then(res => {
+            res.should.have.status(200);
+            done();
+        })
+    });
 });
