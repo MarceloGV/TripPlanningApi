@@ -124,7 +124,7 @@ describe('Trip UT', function(){
         let request = http_mocks.createRequest({
             method: 'GET',
             params: {id: '5ae8e6d5af9fdf1ad05a3eaf'},
-            url: '/trip/get'
+            url: '/trip/get/:id'
         });
         var TripMock = sinon.mock(Trip);
         TripMock
@@ -132,8 +132,7 @@ describe('Trip UT', function(){
         .withArgs('5ae8e6d5af9fdf1ad05a3eaf')
         .chain('exec')
         .resolves({id: '5ae8e6d5af9fdf1ad05a3eaf'});
-        
-        
+
         response.on('end', function(){
             TripMock.restore();
             response.statusCode.should.be.eql(200);
@@ -144,22 +143,82 @@ describe('Trip UT', function(){
         tripController.getTrip(request, response);
     });
 
+    it('Eliminar Viaje', function(done){
+        let response = buildResponse();
+        let request = http_mocks.createRequest({
+            method: 'DELETE',
+            params: {id: '5ae8e6d5af9fdf1ad05a3eaf'},
+            url: '/trip/delete/5ae8e6d5af9fdf1ad05a3eaf'
+        });
+        var TripMock = sinon.mock(Trip);
+        TripMock
+        .expects('deleteOne')
+        .withArgs({_id :'5ae8e6d5af9fdf1ad05a3eaf'})
+        .chain('exec')
+        .resolves('Ok');
 
+        response.on('end', function(){
+            TripMock.restore();
+            response.statusCode.should.be.eql(200);
+            done();
+        });
+
+        tripController.deleteTrip(request, response);
+    });
+
+    it('Eliminar Viaje(Error)', function(done){
+        let response = buildResponse();
+        let request = http_mocks.createRequest({
+            method: 'DELETE',
+            params: {id: '5ae8e6d5af9fdf1ad05a3eaf'},
+            url: '/trip/delete/5ae8e6d5af9fdf1ad05a3eaf'
+        });
+        var TripMock = sinon.mock(Trip);
+        TripMock
+        .expects('deleteOne')
+        .withArgs({_id :'5ae8e6d5af9fdf1ad05a3eaf'})
+        .chain('exec')
+        .rejects('Fail');
+
+        response.on('end', function(){
+            TripMock.restore();
+            response.statusCode.should.be.eql(500);
+            done();
+        });
+
+        tripController.deleteTrip(request, response);
+    });
 })
 
 describe('Viajes End-To-End test', function(){
     let idViaje;
     let trip = {
-        name: 'Unit Test End to end',
-        description: 'bodyTrip.description',
-        duration: 'bodyTrip.duration',
-        cities: []
+        name: "Codigo Rutero" ,
+        description: "Viaje a lo largo de la argentina",
+        duration: "6 meses" ,
+        cities: [{
+            name: "Sierra de la Ventana",
+            position: {
+                lat: "-38.256831238",
+                long: "-54.578165666",
+            },
+            country: "Argentina",
+            description: "Sierra de la Ventana, Buenos Aires",
+            places: [{
+                name: "Cerro Bahía Blanca",
+                position: {
+                    lat: "-38.256831238",
+                long: "-54.578165666"
+                },
+                descrition: "Cerro de 500 m de altura."
+            }]
+        }]
     }
     it('Crear viaje(válido)', function(done){
         chai.request(base_url)
         .post("/create")
         .send({trip: JSON.stringify(trip)})
-        .then(res =>{
+        .then(res =>{   
             idViaje = res.body._id;                  
             res.should.have.status(201);
             done();
@@ -168,11 +227,22 @@ describe('Viajes End-To-End test', function(){
 
     it('Obtener viaje creado', function(done){
         chai.request(base_url)
-        .get("/get")
+        .get("/get/" + idViaje)
         .send({id: idViaje})
         .then(res => {
+            res.body.cities.length.should.be.above(0);
+            res.body.cities[0].places.length.should.be.equal(1);
             res.should.have.status(200);
             done();
         })
+    });
+
+     it('Eliminar trip', function(done){
+        chai.request(base_url)
+        .delete("/delete/" + idViaje)
+        .then(res => {
+            res.should.have.status(200);
+            done();
+        });
     });
 });

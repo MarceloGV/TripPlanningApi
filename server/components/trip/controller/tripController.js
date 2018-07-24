@@ -12,7 +12,7 @@ const TripController = function(){
                 name: bodyTrip.name,
                 description: bodyTrip.description,
                 duration: bodyTrip.duration,
-                cities: []
+                cities: bodyTrip.cities
             });
             trip.save()
             .then( trip => {
@@ -34,6 +34,16 @@ const TripController = function(){
         })
         .catch(err => {
             return res.status(500).send('Error al intentar obetener viaje');
+        })
+    }
+    
+    controller.deleteTrip = function(req, res){
+        Trip.deleteOne({_id: req.params.id})
+        .then(() => {
+            res.status(200).jsonp({message: 'Ok'});
+        })
+        .catch(err => {
+            return res.status(500).send('Error al eliminar viaje');
         })
     }
 
